@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Website</title>
+    <style>
+        #adminPanel {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 20%;
+            background: white;
+            border: 1px solid black;
+            padding: 20px;
+            z-index: 10;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Subscribe to Notifications</h1>
+    <button id="subscribeBtn">Subscribe</button>
+    <button id="adminBtn">Admin Panel</button>
+
+    <div id="overlay"></div>
+    <div id="adminPanel">
+        <h2>Admin Panel</h2>
+        <input type="password" id="password" placeholder="Enter password">
+        <button id="loginBtn">Login</button>
+        <div id="notificationInput" style="display:none;">
+            <textarea id="message" placeholder="Enter notification message"></textarea>
+            <button id="sendBtn">Send Notification</button>
+        </div>
+        <button id="closeAdmin">Close</button>
+    </div>
+
+    <ul id="notifications"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const notifications = document.getElementById('notifications');
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        const adminBtn = document.getElementById('adminBtn');
+        const overlay = document.getElementById('overlay');
+        const adminPanel = document.getElementById('adminPanel');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const notificationInput = document.getElementById('notificationInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const closeAdmin = document.getElementById('closeAdmin');
+
+        // Request permission for notifications
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+            }
+        });
+
+        subscribeBtn.onclick = () => {
+            alert('You have subscribed to notifications!');
+        };
+
+        adminBtn.onclick = () => {
+            overlay.style.display = 'block';
+            adminPanel.style.display = 'block';
+        };
+
+        closeAdmin.onclick = () => {
+            overlay.style.display = 'none';
+            adminPanel.style.display = 'none';
+        };
+
+        loginBtn.onclick = () => {
+            if (passwordInput.value === 'floyd') {
+                notificationInput.style.display = 'block';
+                passwordInput.value = '';
+            } else {
+                alert('Incorrect password!');
+            }
+        };
+
+        sendBtn.onclick = () => {
+            const message = document.getElementById('message').value;
+            socket.emit('sendNotification', message);
+            document.getElementById('message').value = '';
+        };
+
+        socket.on('notification', (message) => {
+            // Display the notification
+            if (Notification.permission === 'granted') {
+                new Notification('New Notification', {
+                    body: message,
+                    icon: 'path/to/icon.png' // Optional icon
+                });
+            }
+
+            // Optionally, display the message in the notifications list
+            const li = document.createElement('li');
+            li.textContent = message;
+            notifications.appendChild(li);
+        });
+    </script>
+</body>
+</html>
